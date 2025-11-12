@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+ <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
     <meta charset="UTF-8">
@@ -13,7 +13,7 @@
             <div class="subtitle">نظام الحجز الإلكتروني</div>
         </header>
         
-        <form id="bookingForm" action="https://formspree.io/f/YOUR_FORMSPREE_CODE" method="POST" enctype="multipart/form-data">
+        <form id="bookingForm" action="https://formspree.io/f/manannbb" method="POST" enctype="multipart/form-data">
         <div class="steps-container">
             <!-- الخطوة 1: بيانات الرحلة -->
             <div class="step active" id="step1">
@@ -22,7 +22,16 @@
                 <p style="margin-bottom: 20px; color: #666;">حدد بيانات الرحلة الخاصة بك</p>
                 
                 <div class="form-group">
-                    <label for="departure">مدينة المغادرة:</label>
+                    <label for="tripType">نوع الرحلة:</label>
+                    <select id="tripType" name="Trip_Type" required>
+                        <option value="">اختر نوع الرحلة</option>
+                        <option value="ذهاب فقط">ذهاب فقط</option>
+                        <option value="ذهاب وعودة">ذهاب وعودة</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label for="departure">من مدينة:</label>
                     <select id="departure" name="Departure_City" required>
                         <option value="">اختر مدينة المغادرة</option>
                         <option value="الرياض">الرياض</option>
@@ -32,11 +41,13 @@
                         <option value="الدمام">الدمام</option>
                         <option value="أبها">أبها</option>
                         <option value="الطائف">الطائف</option>
+                        <option value="القصيم">القصيم</option>
+                        <option value="حائل">حائل</option>
                     </select>
                 </div>
                 
                 <div class="form-group">
-                    <label for="destination">مدينة الوصول:</label>
+                    <label for="destination">إلى مدينة:</label>
                     <select id="destination" name="Destination_City" required>
                         <option value="">اختر مدينة الوصول</option>
                         <option value="الرياض">الرياض</option>
@@ -49,6 +60,10 @@
                         <option value="الدوحة">الدوحة</option>
                         <option value="القاهرة">القاهرة</option>
                         <option value="عمّان">عمّان</option>
+                        <option value="المنامة">المنامة</option>
+                        <option value="الكويت">الكويت</option>
+                        <option value="اسطنبول">اسطنبول</option>
+                        <option value="لندن">لندن</option>
                     </select>
                 </div>
                 
@@ -57,12 +72,109 @@
                     <input type="date" id="departureDate" name="Departure_Date" required>
                 </div>
                 
-                <hr>
-                
-                <div class="form-group">
-                    <label for="returnDate">تاريخ العودة (اختياري):</label>
+                <div class="form-group" id="returnDateGroup" style="display: none;">
+                    <label for="returnDate">تاريخ العودة:</label>
                     <input type="date" id="returnDate" name="Return_Date">
                 </div>
+                
+                <div class="form-group">
+                    <label for="airline">شركة الطيران المفضلة:</label>
+                    <select id="airline" name="Preferred_Airline">
+                        <option value="">اختر الشركة المفضلة</option>
+                        <option value="اليمامة للطيران">اليمامة للطيران</option>
+                        <option value="السعودية">الخطوط السعودية</option>
+                        <option value="ناس">طيران ناس</option>
+                        <option value="الخليج">طيران الخليج</option>
+                        <option value="الاتحاد">الاتحاد للطيران</option>
+                        <option value="القطرية">القطرية</option>
+                        <option value="الإمارات">الإمارات</option>
+                        <option value="لا تفضل">لا تفضل شركة محددة</option>
+                    </select>
+                </div>
+                
+                <div class="navigation-buttons">
+                    <button type="button" id="nextToStep2">التالي</button>
+                </div>
+            </div>
+            
+            <!-- الخطوة 2: اختيار التذكرة -->
+            <div class="step" id="step2">
+                <div class="step-number">2</div>
+                <h2>اختيار نوع التذكرة</h2>
+                <p style="margin-bottom: 20px; color: #666;">اختر نوع التذكرة المناسب لك</p>
+                
+                <div class="ticket-options">
+                    <div class="ticket-option" data-type="economy" data-price="450">
+                        <div class="ticket-header">
+                            <h3>الدرجة الاقتصادية</h3>
+                            <div class="price">450 ر.س</div>
+                        </div>
+                        <div class="ticket-features">
+                            <ul>
+                                <li>✓ مقعد مريح</li>
+                                <li>✓ وجبة خفيفة</li>
+                                <li>✓ مشروبات مجانية</li>
+                                <li>✓ أمتعة 20 كجم</li>
+                            </ul>
+                        </div>
+                        <button type="button" class="select-ticket">اختيار</button>
+                    </div>
+                    
+                    <div class="ticket-option popular" data-type="premium_economy" data-price="750">
+                        <div class="ticket-header">
+                            <div class="popular-badge">الأكثر شيوعاً</div>
+                            <h3>الدرجة المميزة</h3>
+                            <div class="price">750 ر.س</div>
+                        </div>
+                        <div class="ticket-features">
+                            <ul>
+                                <li>✓ كل مزايا الاقتصادية</li>
+                                <li>✓ مساحة أكبر للأرجل</li>
+                                <li>✓ وجبة كاملة</li>
+                                <li>✓ أمتعة 30 كجم</li>
+                                <li>✓ أولوية الصعود</li>
+                            </ul>
+                        </div>
+                        <button type="button" class="select-ticket">اختيار</button>
+                    </div>
+                    
+                    <div class="ticket-option" data-type="business" data-price="1200">
+                        <div class="ticket-header">
+                            <h3>درجة رجال الأعمال</h3>
+                            <div class="price">1,200 ر.س</div>
+                        </div>
+                        <div class="ticket-features">
+                            <ul>
+                                <li>✓ كل مزايا المميزة</li>
+                                <li>✓ مقاعد متكاملة</li>
+                                <li>✓ طعام من اختيارك</li>
+                                <li>✓ أمتعة 40 كجم</li>
+                                <li>✓ صالة المطار</li>
+                                <li>✓ خدمة الباب للباب</li>
+                            </ul>
+                        </div>
+                        <button type="button" class="select-ticket">اختيار</button>
+                    </div>
+                </div>
+                
+                <div class="selected-ticket-info" id="selectedTicketInfo" style="display: none;">
+                    <div class="ticket-summary">
+                        <h4>التذكرة المختارة</h4>
+                        <div id="ticketSummary"></div>
+                        <div id="totalPrice" class="total-price"></div>
+                    </div>
+                </div>
+                
+                <div class="navigation-buttons">
+                    <button type="button" id="backToStep1">السابق</button>
+                    <button type="button" id="nextToStep3">التالي</button>
+                </div>
+            </div>
+            
+            <!-- الخطوة 3: معلومات المسافرين -->
+            <div class="step" id="step3">
+                <div class="step-number">3</div>
+                <h2>معلومات المسافرين</h2>
                 
                 <div class="form-group">
                     <label for="passengers">عدد المسافرين:</label>
@@ -76,120 +188,106 @@
                     </select>
                 </div>
                 
-                <div class="form-group">
-                    <label for="seatClass">نوع المقعد:</label>
-                    <select id="seatClass" name="Seat_Class">
-                        <option value="economy">الدرجة السياحية</option>
-                        <option value="premium_economy">الدرجة السياحية المميزة</option>
-                        <option value="business">درجة رجال الأعمال</option>
-                        <option value="first">الدرجة الأولى</option>
-                    </select>
-                </div>
-                
-                <div class="navigation-buttons">
-                    <button type="button" id="nextToStep2">التالي</button>
-                </div>
-            </div>
-            
-            <!-- الخطوة 2: معلومات المسافرين -->
-            <div class="step" id="step2">
-                <div class="step-number">2</div>
-                <h2>معلومات المسافرين</h2>
-                
-                <div class="form-group">
-                    <label for="email">البريد الإلكتروني:</label>
-                    <input type="email" id="email" name="Customer_Email" placeholder="example@gmail.com" required>
-                </div>
-                
-                <div class="form-group">
-                    <label for="phone">رقم الهاتف:</label>
-                    <input type="tel" id="phone" name="Customer_Phone" placeholder="05XXXXXXXX" required>
-                </div>
-                
                 <div id="passengerForms">
-                    <div class="passenger-form">
-                        <h3>المسافر 1</h3>
-                        <div class="form-group">
-                            <label for="passengerName1">الاسم الكامل:</label>
-                            <input type="text" id="passengerName1" name="Passenger_1_Name" required>
-                        </div>
-                        <div class="form-group">
-                            <label for="passengerPassport1">رقم الجواز:</label>
-                            <input type="text" id="passengerPassport1" name="Passenger_1_Passport" required>
-                        </div>
-                        <div class="form-group">
-                            <label for="passengerDOB1">تاريخ الميلاد:</label>
-                            <input type="date" id="passengerDOB1" name="Passenger_1_DOB" required>
-                        </div>
-                    </div>
-                </div>
-                
-                <div class="navigation-buttons">
-                    <button type="button" id="backToStep1">السابق</button>
-                    <button type="button" id="nextToStep3">التالي</button>
-                </div>
-            </div>
-            
-            <!-- الخطوة 3: طريقة الدفع -->
-            <div class="step" id="step3">
-                <div class="step-number">3</div>
-                <h2>طريقة الدفع</h2>
-                
-                <div class="form-group">
-                    <label>اختر طريقة الدفع:</label>
-                    <div class="payment-options">
-                        <div class="payment-option">
-                            <input type="radio" id="alrajhi" name="Payment_Method" value="الراجحي" checked>
-                            <label for="alrajhi">بنك الراجحي</label>
-                        </div>
-                        <div class="payment-option">
-                            <input type="radio" id="alanma" name="Payment_Method" value="الأنماء">
-                            <label for="alanma">بنك الأنماء</label>
-                        </div>
-                        <div class="payment-option">
-                            <input type="radio" id="alahli" name="Payment_Method" value="الأهلي">
-                            <label for="alahli">البنك الأهلي</label>
-                        </div>
-                        <div class="payment-option">
-                            <input type="radio" id="sabb" name="Payment_Method" value="ساب">
-                            <label for="sabb">بنك ساب</label>
-                        </div>
-                        <div class="payment-option">
-                            <input type="radio" id="riadah" name="Payment_Method" value="الرياض">
-                            <label for="riadah">بنك الرياض</label>
-                        </div>
-                    </div>
-                </div>
-                
-                <div class="bank-info" id="bankInfo">
-                    <h3>معلومات الحساب البنكي</h3>
-                    <div class="account-details">
-                        <p><strong>بنك الأنماء:</strong></p>
-                        <p>رقم الحساب: <strong>SA6305000068206733958000</strong></p>
-                        <p>اسم المستفيد: <strong>اليمامة للطيران</strong></p>
-                    </div>
-                    <p style="color: #e74c3c; margin: 10px 0;">يرجى التحويل إلى الحساب أعلاه ثم رفع إيصال الدفع</p>
-                </div>
-                
-                <div class="form-group">
-                    <label for="receipt">رفع إيصال الدفع (PDF, JPG, PNG):</label>
-                    <input type="file" id="receipt" name="Payment_Receipt" accept=".pdf,.jpg,.jpeg,.png" required>
-                </div>
-                
-                <div class="form-group">
-                    <label for="transactionNumber">رقم العملية البنكية:</label>
-                    <input type="text" id="transactionNumber" name="Transaction_Number" placeholder="أدخل رقم العملية من الإيصال" required>
+                    <!-- سيتم توليد حقول المسافرين هنا -->
                 </div>
                 
                 <div class="navigation-buttons">
                     <button type="button" id="backToStep2">السابق</button>
+                    <button type="button" id="nextToStep4">التالي</button>
+                </div>
+            </div>
+            
+            <!-- الخطوة 4: معلومات الاتصال والعنوان -->
+            <div class="step" id="step4">
+                <div class="step-number">4</div>
+                <h2>معلومات الاتصال والعنوان</h2>
+                
+                <div class="form-group">
+                    <label for="email">البريد الإلكتروني:</label>
+                    <input type="email" id="email" name="Customer_Email" placeholder="mohammadatmymy44@gmail.com" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="phone">رقم الجوال:</label>
+                    <input type="tel" id="phone" name="Customer_Phone" placeholder="05XXXXXXXX" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="address">عنوان الإقامة (للسفر الخارجي):</label>
+                    <textarea id="address" name="Residence_Address" rows="3" placeholder="في حالة السفر الخارجي، يرجى كتابة عنوان الإقامة"></textarea>
+                </div>
+                
+                <div class="form-group">
+                    <label for="notes">ملاحظات إضافية:</label>
+                    <textarea id="notes" name="Additional_Notes" rows="3" placeholder="أي ملاحظات إضافية تريد إضافتها"></textarea>
+                </div>
+                
+                <div class="navigation-buttons">
+                    <button type="button" id="backToStep3">السابق</button>
+                    <button type="button" id="nextToStep5">التالي</button>
+                </div>
+            </div>
+            
+            <!-- الخطوة 5: طريقة الدفع -->
+            <div class="step" id="step5">
+                <div class="step-number">5</div>
+                <h2>الدفع الإلكتروني</h2>
+                
+                <div class="payment-summary">
+                    <h3>ملخص الطلب</h3>
+                    <div id="orderSummary"></div>
+                    <div class="final-price" id="finalPrice"></div>
+                </div>
+                
+                <div class="qr-payment-section">
+                    <h3>الدفع عبر QR Code</h3>
+                    <p>يرجى مسح الكود QR أدناه لإتمام عملية الدفع</p>
+                    
+                    <div class="qr-container">
+                        <div id="qrcode"></div>
+                        <div class="qr-instructions">
+                            <p><strong>طريقة الدفع:</strong></p>
+                            <ol>
+                                <li>افتح تطبيق البنك على هاتفك</li>
+                                <li>اختر خدمة مسح QR Code</li>
+                                <li>وجه الكاميرا نحو الكود أعلاه</li>
+                                <li>تأكد من المبلغ والبيانات</li>
+                                <li>أكمل عملية الدفع</li>
+                            </ol>
+                        </div>
+                    </div>
+                    
+                    <div class="bank-info">
+                        <h4>معلومات الحساب البنكي</h4>
+                        <div class="account-details">
+                            <p><strong>بنك الأنماء</strong></p>
+                            <p>رقم الحساب: <strong>SA6305000068206733958000</strong></p>
+                            <p>اسم المستفيد: <strong>اليمامة للطيران</strong></p>
+                            <p>المبلغ: <strong id="paymentAmount">0 ر.س</strong></p>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label for="transactionId">رقم العملية (من تطبيق البنك):</label>
+                    <input type="text" id="transactionId" name="Transaction_ID" placeholder="أدخل رقم العملية بعد الدفع" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="paymentScreenshot">صورة إثبات الدفع (اختياري):</label>
+                    <input type="file" id="paymentScreenshot" name="Payment_Screenshot" accept=".jpg,.jpeg,.png">
+                </div>
+                
+                <div class="navigation-buttons">
+                    <button type="button" id="backToStep4">السابق</button>
                     <button type="submit" id="confirmBooking">تأكيد الحجز والإرسال</button>
                 </div>
             </div>
             
-            <!-- الخطوة 4: تأكيد الحجز -->
-            <div class="step" id="step4">
-                <div class="step-number">4</div>
+            <!-- الخطوة 6: تأكيد الحجز -->
+            <div class="step" id="step6">
+                <div class="step-number">6</div>
                 <h2 style="color: #27ae60;">تم تأكيد حجزك بنجاح!</h2>
                 
                 <div class="booking-ref">
@@ -197,9 +295,14 @@
                 </div>
                 
                 <div class="confirmation-details">
+                    <div class="e-ticket">
+                        <h3>التذكرة الإلكترونية</h3>
+                        <div id="eTicketDetails"></div>
+                    </div>
+                    
                     <p>تم إرسال التذكرة الإلكترونية وتفاصيل الحجز إلى بريدك الإلكتروني.</p>
                     <p style="margin-top: 15px; color: #666;">يرجى الاحتفاظ برقم الحجز للرجوع إليه عند الحاجة.</p>
-                    <p style="margin-top: 10px; color: #e67e22;">سيتم مراجعة إيصال الدفع وتفعيل الحجز خلال 24 ساعة</p>
+                    <p style="margin-top: 10px; color: #e67e22;">يرجى الحضور إلى المطار قبل ساعتين من موعد الإقلاع</p>
                 </div>
                 
                 <button type="button" id="newBooking" style="margin-top: 20px;">حجز جديد</button>
@@ -208,9 +311,12 @@
         </form>
         
         <div class="error-message" id="errorMessage"></div>
+        <div class="success-message" id="successMessage"></div>
         
     </div>
 
+    <!-- مكتبة QR Code -->
+    <script src="https://cdn.rawgit.com/davidshimjs/qrcodejs/gh-pages/qrcode.min.js"></script>
     <script src="script.js"></script>
 </body>
-</html>
+    </html>
