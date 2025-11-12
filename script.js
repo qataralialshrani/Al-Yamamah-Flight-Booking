@@ -199,7 +199,7 @@ function showTicketSummary() {
     document.getElementById('selectedTicketInfo').style.display = 'block';
 }
 
-// تحديث QR Code
+// تحديث QR Code - تم التصحيح هنا
 function updateQRCode() {
     const qrContainer = document.getElementById('qrcode');
     if (!qrContainer) return;
@@ -207,13 +207,8 @@ function updateQRCode() {
     qrContainer.innerHTML = '';
     
     if (totalAmount > 0) {
-        const qrData = JSON.stringify({
-            bank: 'alanma',
-            account: 'SA6305000068206733958000',
-            amount: totalAmount,
-            beneficiary: 'اليمامة للطيران',
-            reference: `YM-${Date.now()}`
-        });
+        // إنشاء بيانات QR Code بسيطة بدون معلومات حساسة
+        const qrData = `اليمامة للطيران - المبلغ: ${totalAmount} ر.س`;
         
         new QRCode(qrContainer, {
             text: qrData,
@@ -223,6 +218,8 @@ function updateQRCode() {
             colorLight: "#ffffff",
             correctLevel: QRCode.CorrectLevel.H
         });
+        
+        console.log('QR Code generated for amount:', totalAmount);
     }
 }
 
@@ -451,6 +448,13 @@ function showStep(stepNumber) {
     const targetStep = document.getElementById(`step${stepNumber}`);
     if (targetStep) {
         targetStep.classList.add('active');
+        
+        // عند الانتقال لخطوة الدفع، تأكد من إنشاء QR Code
+        if (stepNumber === 5) {
+            setTimeout(() => {
+                updateQRCode();
+            }, 100);
+        }
     }
     window.scrollTo(0, 0);
     hideError();
@@ -500,6 +504,13 @@ document.addEventListener('DOMContentLoaded', function() {
     if (departureDateElement) departureDateElement.min = today;
     if (returnDateElement) returnDateElement.min = today;
     
+    // إزالة البريد الإلكتروني الافتراضي - تم التصحيح هنا
+    const emailField = document.getElementById('email');
+    if (emailField) {
+        emailField.placeholder = "أدخل بريدك الإلكتروني";
+        emailField.value = ""; // إفراغ الحقل من أي قيمة افتراضية
+    }
+    
     // تعيين تاريخ الميلاد الأدنى (18 سنة من الآن)
     const minDOB = new Date();
     minDOB.setFullYear(minDOB.getFullYear() - 100);
@@ -515,7 +526,7 @@ document.addEventListener('DOMContentLoaded', function() {
     // إعداد اختيار التذاكر
     setupTicketSelection();
     
-    // التنقل بين الخطوات - تم التصحيح هنا
+    // التنقل بين الخطوات
     const nextToStep2 = document.getElementById('nextToStep2');
     if (nextToStep2) {
         nextToStep2.addEventListener('click', function() {
@@ -590,7 +601,10 @@ document.addEventListener('DOMContentLoaded', function() {
             
             if (email && email.value && phone && phone.value) {
                 showStep(5);
-                updateOrderSummary();
+                // تأكد من إنشاء QR Code عند الانتقال للخطوة
+                setTimeout(() => {
+                    updateQRCode();
+                }, 300);
             } else {
                 showError('يرجى ملء البريد الإلكتروني ورقم الجوال');
             }
