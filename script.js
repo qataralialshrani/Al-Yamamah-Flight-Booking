@@ -1,8 +1,27 @@
 // العناصر الرئيسية
 const steps = document.querySelectorAll('.step');
 const errorMessage = document.getElementById('errorMessage');
+const successMessage = document.getElementById('successMessage');
 const bookingForm = document.getElementById('bookingForm'); 
 const passengersSelect = document.getElementById('passengers');
+const tripTypeSelect = document.getElementById('tripType');
+const returnDateGroup = document.getElementById('returnDateGroup');
+
+// متغيرات التذكرة
+let selectedTicketType = '';
+let selectedTicketPrice = 0;
+let totalAmount = 0;
+
+// إظهار/إخفاء تاريخ العودة بناءً على نوع الرحلة
+tripTypeSelect.addEventListener('change', function() {
+    if (this.value === 'ذهاب وعودة') {
+        returnDateGroup.style.display = 'block';
+        document.getElementById('returnDate').required = true;
+    } else {
+        returnDateGroup.style.display = 'none';
+        document.getElementById('returnDate').required = false;
+    }
+});
 
 // إرسال بيانات الحجز إلى Formspree بعد التحقق
 bookingForm.addEventListener('submit', async function(e) {
@@ -14,24 +33,22 @@ bookingForm.addEventListener('submit', async function(e) {
         return;
     }
     
+    // التحقق من اختيار التذكرة
+    if (!selectedTicketType) {
+        showError('يرجى اختيار نوع التذكرة أولاً');
+        showStep(2);
+        return;
+    }
+    
     // توليد رقم الحجز وإضافته للبيانات المرسلة
     const ref = generateBookingReference();
     document.getElementById('bookingReference').textContent = ref;
     
-    // إضافة حقل مخفي لـ Formspree
-    const refInput = document.createElement('input');
-    refInput.type = 'hidden';
-    refInput.name = 'Booking_Reference';
-    refInput.value = ref;
-    bookingForm.appendChild(refInput);
-
-    // إضافة معلومات إضافية
-    const totalPrice = calculateTotalPrice();
-    const priceInput = document.createElement('input');
-    priceInput.type = 'hidden';
-    priceInput.name = 'Total_Price';
-    priceInput.value = totalPrice;
-    bookingForm.appendChild(priceInput);
+    // إضافة حقول مخفية لـ Formspree
+    addHiddenField('Ticket_Type', selectedTicketType);
+    addHiddenField('Ticket_Price', selectedTicketPrice.toString());
+    addHiddenField('Total_Amount', totalAmount.toString());
+    addHiddenField('Booking_Reference', ref);
 
     // إظهار رسالة تحميل
     showLoading();
@@ -49,14 +66,18 @@ bookingForm.addEventListener('submit', async function(e) {
         });
 
         if (response.ok) {
+            // إنشاء التذكرة الإلكترونية
+            generateETicket(ref);
+            
             // الانتقال إلى صفحة التأكيد
             setTimeout(() => {
                 hideLoading();
-                showStep(4);
+                showStep(6);
                 
-                // إرسال بيانات إضافية إلى قاعدة البيانات (محاكاة)
-                saveToDatabase(formData, ref, totalPrice);
+                // حفظ البيانات في قاعدة البيانات (محاكاة)
+                saveToDatabase(formData, ref, totalAmount);
                 
+                showSuccess('تم إرسال بيانات الحجز بنجاح! سيصلك تأكيد على بريدك الإلكتروني.');
             }, 2000);
         } else {
             throw new Error('فشل في إرسال البيانات');
@@ -68,262 +89,156 @@ bookingForm.addEventListener('submit', async function(e) {
     }
 });
 
-// توليد حقول المسافرين ديناميكياً
-function generatePassengerForms() {
-    const passengerCount = parseInt(passengersSelect.value);
-    const container = document.getElementById('passengerForms');
-    container.innerHTML = '';
-    
-    for (let i = 1; i <= passengerCount; i++) {
-        const passengerForm = document.createElement('div');
-        passengerForm.className = 'passenger-form';
-        passengerForm.innerHTML = `
-            <h3>المسافر ${i}</h3>
-            <div class="form-group">
-                <label for="passengerName${i}">الاسم الكامل:</label>
-                <input type="text" id="passengerName${i}" name="Passenger_${i}_Name" required>
-            </div>
-            <div class="form-group">
-                <label for="passengerPassport${i}">رقم الجواز:</label>
-                <input type="text" id="passengerPassport${i}" name="Passenger_${i}_Passport" required>
-            </div>
-            <div class="form-group">
-                <label for="passengerDOB${i}">تاريخ الميلاد:</label>
-                <input type="date" id="passengerDOB${i}" name="Passenger_${i}_DOB" required>
-            </div>
-            ${i < passengerCount ? '<hr style="margin: 15px 0;">' : ''}
-        `;
-        container.appendChild(passengerForm);
-    }
+// إضافة حقل مخفي للنموذج
+function addHiddenField(name, value) {
+    const input = document.createElement('input');
+    input.type = 'hidden';
+    input.name = name;
+    input.value = value;
+    bookingForm.appendChild(input);
 }
 
-// توليد رقم حجز عشوائي
-function generateBookingReference() {
-    const prefix = 'YM'; 
-    const year = new Date().getFullYear();
-    const randomNum = Math.floor(100000 + Math.random() * 900000);
-    return `${prefix}-${year}-${randomNum}`;
-}
-
-// حساب السعر الإجمالي
-function calculateTotalPrice() {
-    const passengerCount = parseInt(passengersSelect.value);
-    const seatClass = document.getElementById('seatClass').value;
-    
-    let basePrice = 500; // سعر أساسي
-    let classMultiplier = 1;
-    
-    switch(seatClass) {
-        case 'premium_economy':
-            classMultiplier = 1.5;
-            break;
-        case 'business':
-            classMultiplier = 2.5;
-            break;
-        case 'first':
-            classMultiplier = 4;
-            break;
-    }
-    
-    return (basePrice * classMultiplier * passengerCount).toFixed(2);
-}
-
-// التحقق من صحة النموذج
-function validateForm() {
-    // التحقق من الخطوة 1
-    if (!document.getElementById('departure').value || 
-        !document.getElementById('destination').value || 
-        !document.getElementById('departureDate').value) {
-        return false;
-    }
-    
-    // التحقق من الخطوة 2
-    if (!document.getElementById('email').value || 
-        !document.getElementById('phone').value) {
-        return false;
-    }
-    
-    // التحقق من معلومات المسافرين
-    const passengerCount = parseInt(passengersSelect.value);
-    for (let i = 1; i <= passengerCount; i++) {
-        const name = document.getElementById(`passengerName${i}`);
-        const passport = document.getElementById(`passengerPassport${i}`);
-        const dob = document.getElementById(`passengerDOB${i}`);
-        
-        if (!name || !name.value || !passport || !passport.value || !dob || !dob.value) {
-            return false;
-        }
-    }
-    
-    // التحقق من الخطوة 3
-    if (!document.getElementById('transactionNumber').value || 
-        !document.getElementById('receipt').files.length) {
-        return false;
-    }
-    
-    return true;
-}
-
-// عرض رسالة خطأ
-function showError(message) {
-    errorMessage.textContent = message;
-    errorMessage.style.display = 'block';
-    window.scrollTo(0, 0);
-}
-
-// إخفاء رسالة الخطأ
-function hideError() {
-    errorMessage.style.display = 'none';
-}
-
-// عرض رسالة تحميل
-function showLoading() {
-    const submitBtn = document.getElementById('confirmBooking');
-    submitBtn.innerHTML = 'جاري الإرسال...';
-    submitBtn.disabled = true;
-}
-
-// إخفاء رسالة تحميل
-function hideLoading() {
-    const submitBtn = document.getElementById('confirmBooking');
-    submitBtn.innerHTML = 'تأكيد الحجز والإرسال';
-    submitBtn.disabled = false;
-}
-
-// عرض خطوة معينة
-function showStep(stepNumber) {
-    steps.forEach(step => {
-        step.classList.remove('active');
-    });
-    document.getElementById(`step${stepNumber}`).classList.add('active');
-    window.scrollTo(0, 0);
-    hideError();
-}
-
-// محاكاة حفظ البيانات في قاعدة البيانات
-function saveToDatabase(formData, reference, totalPrice) {
-    const bookingData = {
-        reference: reference,
-        departure: document.getElementById('departure').value,
-        destination: document.getElementById('destination').value,
-        departureDate: document.getElementById('departureDate').value,
-        returnDate: document.getElementById('returnDate').value,
-        passengers: document.getElementById('passengers').value,
-        seatClass: document.getElementById('seatClass').value,
-        email: document.getElementById('email').value,
-        phone: document.getElementById('phone').value,
-        paymentMethod: document.querySelector('input[name="Payment_Method"]:checked').value,
-        transactionNumber: document.getElementById('transactionNumber').value,
-        totalPrice: totalPrice,
-        timestamp: new Date().toISOString()
-    };
-    
-    // حفظ في LocalStorage (محاكاة لقاعدة البيانات)
-    let bookings = JSON.parse(localStorage.getItem('yamamaBookings') || '[]');
-    bookings.push(bookingData);
-    localStorage.setItem('yamamaBookings', JSON.stringify(bookings));
-    
-    console.log('تم حفظ بيانات الحجز:', bookingData);
-}
-
-// التهيئة
-document.addEventListener('DOMContentLoaded', function() {
-    // تحديث حقول التاريخ
-    const today = new Date().toISOString().split('T')[0];
-    document.getElementById('departureDate').min = today;
-    document.getElementById('returnDate').min = today;
-    
-    // تعيين تاريخ الميلاد الأدنى (18 سنة من الآن)
-    const minDOB = new Date();
-    minDOB.setFullYear(minDOB.getFullYear() - 100);
-    document.querySelectorAll('input[type="date"]').forEach(input => {
-        if (input.id.includes('DOB')) {
-            input.max = new Date().toISOString().split('T')[0];
-            input.min = minDOB.toISOString().split('T')[0];
-        }
-    });
-    
-    // توليد حقول المسافرين عند التحميل وتغيير العدد
-    generatePassengerForms();
-    passengersSelect.addEventListener('change', generatePassengerForms);
-    
-    // التنقل بين الخطوات
-    document.getElementById('nextToStep2').addEventListener('click', function() {
-        if (document.getElementById('departure').value && 
-            document.getElementById('destination').value && 
-            document.getElementById('departureDate').value) {
-            showStep(2);
-        } else {
-            showError('يرجى ملء جميع حقول بيانات الرحلة المطلوبة');
-        }
-    });
-    
-    document.getElementById('backToStep1').addEventListener('click', () => showStep(1));
-    
-    document.getElementById('nextToStep3').addEventListener('click', () => {
-        let valid = true;
-        const passengerCount = parseInt(passengersSelect.value);
-        
-        for (let i = 1; i <= passengerCount; i++) {
-            const name = document.getElementById(`passengerName${i}`);
-            const passport = document.getElementById(`passengerPassport${i}`);
-            const dob = document.getElementById(`passengerDOB${i}`);
+// اختيار التذكرة
+function setupTicketSelection() {
+    document.querySelectorAll('.select-ticket').forEach(button => {
+        button.addEventListener('click', function() {
+            const ticketOption = this.closest('.ticket-option');
+            const ticketType = ticketOption.dataset.type;
+            const ticketPrice = parseFloat(ticketOption.dataset.price);
             
-            if (!name.value || !passport.value || !dob.value) {
-                valid = false;
-                break;
-            }
-        }
-        
-        if (document.getElementById('email').value && 
-            document.getElementById('phone').value && valid) {
-            showStep(3);
-        } else {
-            showError('يرجى ملء جميع معلومات الاتصال والمسافرين');
-        }
-    });
-    
-    document.getElementById('backToStep2').addEventListener('click', () => showStep(2));
-    
-    document.getElementById('newBooking').addEventListener('click', () => {
-        location.reload();
-    });
-    
-    // تحديث معلومات البنك بناءً على الاختيار
-    document.querySelectorAll('input[name="Payment_Method"]').forEach(radio => {
-        radio.addEventListener('change', function() {
-            const bankInfo = document.getElementById('bankInfo');
-            const accountDetails = bankInfo.querySelector('.account-details');
+            // إزالة التحديد من جميع التذاكر
+            document.querySelectorAll('.ticket-option').forEach(opt => {
+                opt.classList.remove('selected');
+            });
             
-            switch(this.value) {
-                case 'الراجحي':
-                    accountDetails.innerHTML = `
-                        <p><strong>بنك الراجحي:</strong></p>
-                        <p>رقم الحساب: <strong>SA0380000000608010207879</strong></p>
-                        <p>اسم المستفيد: <strong>اليمامة للطيران</strong></p>
-                    `;
-                    break;
-                case 'الأنماء':
-                    accountDetails.innerHTML = `
-                        <p><strong>بنك الأنماء:</strong></p>
-                        <p>رقم الحساب: <strong>SA6305000068206733958000</strong></p>
-                        <p>اسم المستفيد: <strong>اليمامة للطيران</strong></p>
-                    `;
-                    break;
-                case 'الأهلي':
-                    accountDetails.innerHTML = `
-                        <p><strong>البنك الأهلي:</strong></p>
-                        <p>رقم الحساب: <strong>SA0710000001301010101010</strong></p>
-                        <p>اسم المستفيد: <strong>اليمامة للطيران</strong></p>
-                    `;
-                    break;
-                default:
-                    accountDetails.innerHTML = `
-                        <p><strong>${this.value}:</strong></p>
-                        <p>رقم الحساب: <strong>SAXX0000000000000000000</strong></p>
-                        <p>اسم المستفيد: <strong>اليمامة للطيران</strong></p>
-                    `;
-            }
+            // تحديد التذكرة المختارة
+            ticketOption.classList.add('selected');
+            
+            // حفظ البيانات
+            selectedTicketType = ticketType;
+            selectedTicketPrice = ticketPrice;
+            
+            // تحديث السعر الإجمالي
+            updateTotalPrice();
+            
+            // عرض ملخص التذكرة
+            showTicketSummary();
+            
+            showSuccess('تم اختيار التذكرة بنجاح!');
         });
     });
-});
+}
+
+// تحديث السعر الإجمالي
+function updateTotalPrice() {
+    const passengerCount = parseInt(passengersSelect.value);
+    totalAmount = selectedTicketPrice * passengerCount;
+    
+    // تحديث عرض السعر
+    document.getElementById('totalPrice').textContent = `السعر الإجمالي: ${totalAmount} ر.س`;
+    document.getElementById('finalPrice').textContent = `المبلغ الإجمالي: ${totalAmount} ر.س`;
+    document.getElementById('paymentAmount').textContent = `${totalAmount} ر.س`;
+    
+    // تحديث QR Code
+    updateQRCode();
+    
+    // تحديث ملخص الطلب
+    updateOrderSummary();
+}
+
+// تحديث ملخص الطلب
+function updateOrderSummary() {
+    const departure = document.getElementById('departure').value;
+    const destination = document.getElementById('destination').value;
+    const departureDate = document.getElementById('departureDate').value;
+    const returnDate = document.getElementById('returnDate').value;
+    const passengerCount = passengersSelect.value;
+    const tripType = document.getElementById('tripType').value;
+    const airline = document.getElementById('airline').value;
+    
+    let summaryHTML = `
+        <p><strong>نوع الرحلة:</strong> ${tripType}</p>
+        <p><strong>من:</strong> ${departure}</p>
+        <p><strong>إلى:</strong> ${destination}</p>
+        <p><strong>تاريخ المغادرة:</strong> ${departureDate}</p>
+    `;
+    
+    if (returnDate) {
+        summaryHTML += `<p><strong>تاريخ العودة:</strong> ${returnDate}</p>`;
+    }
+    
+    summaryHTML += `
+        <p><strong>عدد المسافرين:</strong> ${passengerCount}</p>
+        <p><strong>شركة الطيران:</strong> ${airline}</p>
+        <p><strong>نوع التذكرة:</strong> ${getTicketName(selectedTicketType)}</p>
+        <p><strong>سعر التذكرة:</strong> ${selectedTicketPrice} ر.س</p>
+    `;
+    
+    document.getElementById('orderSummary').innerHTML = summaryHTML;
+}
+
+// عرض ملخص التذكرة
+function showTicketSummary() {
+    const summary = `
+        <p><strong>نوع التذكرة:</strong> ${getTicketName(selectedTicketType)}</p>
+        <p><strong>سعر التذكرة:</strong> ${selectedTicketPrice} ر.س</p>
+        <p><strong>عدد المسافرين:</strong> ${passengersSelect.value}</p>
+    `;
+    
+    document.getElementById('ticketSummary').innerHTML = summary;
+    document.getElementById('selectedTicketInfo').style.display = 'block';
+}
+
+// تحديث QR Code
+function updateQRCode() {
+    const qrContainer = document.getElementById('qrcode');
+    qrContainer.innerHTML = '';
+    
+    if (totalAmount > 0) {
+        const qrData = JSON.stringify({
+            bank: 'alanma',
+            account: 'SA6305000068206733958000',
+            amount: totalAmount,
+            beneficiary: 'اليمامة للطيران',
+            reference: `YM-${Date.now()}`
+        });
+        
+        new QRCode(qrContainer, {
+            text: qrData,
+            width: 200,
+            height: 200,
+            colorDark: "#0b5563",
+            colorLight: "#ffffff",
+            correctLevel: QRCode.CorrectLevel.H
+        });
+    }
+}
+
+// إنشاء التذكرة الإلكترونية
+function generateETicket(reference) {
+    const departure = document.getElementById('departure').value;
+    const destination = document.getElementById('destination').value;
+    const departureDate = document.getElementById('departureDate').value;
+    const returnDate = document.getElementById('returnDate').value;
+    const passengerCount = passengersSelect.value;
+    const tripType = document.getElementById('tripType').value;
+    const airline = document.getElementById('airline').value;
+    
+    let ticketDetails = `
+        <div class="ticket-info">
+            <p><strong>رقم الحجز:</strong> ${reference}</p>
+            <p><strong>نوع الرحلة:</strong> ${tripType}</p>
+            <p><strong>من:</strong> ${departure}</p>
+            <p><strong>إلى:</strong> ${destination}</p>
+            <p><strong>تاريخ المغادرة:</strong> ${departureDate}</p>
+    `;
+    
+    if (returnDate) {
+        ticketDetails += `<p><strong>تاريخ العودة:</strong> ${returnDate}</p>`;
+    }
+    
+    ticketDetails += `
+            <p><strong>عدد المسافرين:</strong> ${passengerCount}</p>
+            <p><strong>شركة الطيران:</strong> ${airline}</p>
+            <p><strong>نوع التذكرة:</strong> ${getTicketName(selectedTicketType)}</p>
+            <p><strong>المبلغ المدفوع:</strong> ${totalAmount} ر
